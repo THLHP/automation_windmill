@@ -1,0 +1,25 @@
+summary: Uses the kobo forms variable to call python script to populate all forms.
+description: ''
+value:
+  modules:
+    - id: a
+      value:
+        type: forloopflow
+        modules:
+          - id: b
+            value:
+              type: script
+              input_transforms:
+                name:
+                  type: javascript
+                  expr: '`${flow_input.iter.value.name}`'
+                endpoint:
+                  type: javascript
+                  expr: '`${flow_input.iter.value.endpoint}`'
+              path: f/kobo/query_data
+        iterator:
+          type: javascript
+          expr: 'JSON.parse(variable(''f/kobo/endpoints''))[''endpoints'']'
+        parallel: false
+        skip_failures: true
+schema: null

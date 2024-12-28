@@ -1,0 +1,6 @@
+summary: Scripts related to THLHP dicom processing pipeline
+display_name: dicoms
+extra_perms:
+  u/SuhailGhafoor: true
+owners:
+  - u/SuhailGhafoor
