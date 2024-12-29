@@ -1,0 +1,24 @@
+summary: ''
+description: ''
+lock: '!inline f/dicoms/upload_file.script.lock'
+has_preprocessor: false
+kind: script
+no_main_func: false
+schema:
+  $schema: 'https://json-schema.org/draft/2020-12/schema'
+  type: object
+  properties:
+    bucket:
+      type: object
+      description: ''
+      default: null
+      format: resource-s3_bucket
+    input_file:
+      type: string
+      description: ''
+      contentEncoding: base64
+      default: null
+      originalType: bytes
+  required:
+    - input_file
+    - bucket
