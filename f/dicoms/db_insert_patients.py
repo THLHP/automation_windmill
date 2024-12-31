@@ -105,10 +105,10 @@ def main(
         # Release the association
         assoc.release()
     else:
-        print("Association rejected, aborted or never connected")
+        return "Association rejected, aborted or never connected"
 
     # Close the database connection
     cur.close()
     conn.close()
 
-    print("Patient data has been populated.")
+    return "Patient data has been populated."

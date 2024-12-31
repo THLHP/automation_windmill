@@ -1,0 +1,11 @@
+summary: ''
+description: ''
+lock: '!inline f/dicoms/db_insert_studies.script.lock'
+concurrency_time_window_s: 0
+kind: script
+schema:
+  $schema: 'https://json-schema.org/draft/2020-12/schema'
+  type: object
+  properties: {}
+  required: []
+tag: chile
