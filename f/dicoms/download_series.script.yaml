@@ -15,6 +15,6 @@ schema:
     storage_path:
       type: string
       description: ''
-      default: /mnt/blockstorage/debug
+      default: /blockstorage/dicoms_inprogress
       originalType: string
   required: []

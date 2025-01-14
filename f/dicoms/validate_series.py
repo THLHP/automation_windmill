@@ -71,7 +71,7 @@ cur.execute("""
     where
         s.download_status = 'complete'
         and (s.validation = ''
-            or s.validation is null);
+            or s.validation is null or s.validation = 'failed');
 """)
 
 series_list = cur.fetchall()
@@ -96,8 +96,8 @@ def main(
         if not matching_dirs:
             print(f"Directory does not exist for series: {patient_id} - {series_name} - {seriesuid}")
             update_validation_status(patient_id, series_name, 'failed')
-            index +=1
             wmill.set_progress(int(index / total_loop * 100))
+            index +=1
             slices_report.append({
                 "patient_id": patient_id,
                 "series_name": series_name,
@@ -144,9 +144,9 @@ def main(
             })
             print(f"Succeeded on {series_info}")
             update_validation_status(patient_id, series_name, 'complete')
-
-        index +=1
+        
         wmill.set_progress(int(index / total_loop * 100))
+        index +=1
 
     # Print the report
     #for report in missing_slices_report:
@@ -156,4 +156,5 @@ def main(
     # Close the database connection
     cur.close()
     conn.close()
+    wmill.set_progress(100)
     return slices_report
