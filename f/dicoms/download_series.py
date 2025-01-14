@@ -209,7 +209,7 @@ def fetch_next_series(conn):
                     FROM fieldsite.series s
                     JOIN fieldsite.studies st ON s.studyinstanceuid = st.studyinstanceuid
                     JOIN fieldsite.patients p ON st.patient_id = p.patient_id
-                    WHERE (s.download_status IS NULL OR s.download_status = '')
+                    WHERE (s.download_status IS NULL OR s.download_status = '' OR s.download_status = 'failed')
                     ORDER BY s.seriesinstanceuid
                     FOR UPDATE SKIP LOCKED
                     LIMIT 1
