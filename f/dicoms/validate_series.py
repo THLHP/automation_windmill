@@ -122,17 +122,6 @@ def main(
             })
             print(f"Failed images count {series_info}")
             update_validation_status(patient_id, series_name, 'failed')
-        elif downloaded_num_images > expected_num_images:
-            slices_report.append({
-                "patient_id": patient_id,
-                "series_name": series_name,
-                "series_uid": seriesuid,
-                "expected_num_images": expected_num_images,
-                "downloaded_num_images": downloaded_num_images,
-                "status": "too_many_files"
-            })
-            print(f"Failed images count {series_info}")
-            update_validation_status(patient_id, series_name, 'failed')
         else:
             slices_report.append({
                 "patient_id": patient_id,

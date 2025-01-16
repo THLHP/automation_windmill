@@ -110,7 +110,7 @@ def download_series(ae, pacs_address, pacs_port, called_aet, local_aet, patient_
                     if status and hasattr(status, 'Status') and status.Status == 0x0000:
                         break
                     elif status and hasattr(status, 'Status') and status.Status not in (0xFF00, 0xFF01):
-                        print(f"Failed to retrieve series {series_instance_uid}: 0x{status.Status:04X}")
+                        print(f"Failed to retrieve series {patient_id} {series_name} {series_instance_uid}: 0x{status.Status:04X}")
 
                 assoc.release()
                 update_download_status(conn, series_instance_uid, 'complete')
