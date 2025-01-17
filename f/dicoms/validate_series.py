@@ -38,16 +38,16 @@ def get_downloaded_images_count(series_dir):
                 count += 1
     return count
 
-def update_validation_status(patient_id, series_name, status):
+def update_validation_status(patient_id, seriesuid, status):
     """Update the validation status in the PostgreSQL database."""
     cur.execute("""
         UPDATE fieldsite.series
         SET validation = %s, date_modified = CURRENT_TIMESTAMP, download_status = %s
-        WHERE seriesdescription = %s AND studyid IN (
+        WHERE seriesinstanceuid LIKE %s AND studyid IN (
             SELECT studyid FROM fieldsite.studies
             WHERE patient_id = %s
         )
-    """, (status, status, series_name, patient_id))
+    """, (status, status, f"%{seriesuid}", patient_id))
     conn.commit()
 
 # Query all series with download status 'complete' grouped by seriesdescription
@@ -95,7 +95,7 @@ def main(
 
         if not matching_dirs:
             print(f"Directory does not exist for series: {patient_id} - {series_name} - {seriesuid}")
-            update_validation_status(patient_id, series_name, 'failed')
+            update_validation_status(patient_id, seriesuid, 'failed')
             wmill.set_progress(int(index / total_loop * 100))
             index +=1
             slices_report.append({
@@ -121,7 +121,7 @@ def main(
                 "status": "incomplete_download"
             })
             print(f"Failed images count {series_info}")
-            update_validation_status(patient_id, series_name, 'failed')
+            update_validation_status(patient_id, seriesuid, 'failed')
         else:
             slices_report.append({
                 "patient_id": patient_id,
@@ -132,7 +132,7 @@ def main(
                 "status": "success"
             })
             print(f"Succeeded on {series_info}")
-            update_validation_status(patient_id, series_name, 'complete')
+            update_validation_status(patient_id, seriesuid, 'complete')
         
         wmill.set_progress(int(index / total_loop * 100))
         index +=1

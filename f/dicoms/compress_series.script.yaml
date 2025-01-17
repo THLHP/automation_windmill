@@ -1,0 +1,21 @@
+summary: ''
+description: ''
+lock: '!inline f/dicoms/compress_series.script.lock'
+has_preprocessor: false
+kind: script
+no_main_func: false
+schema:
+  $schema: 'https://json-schema.org/draft/2020-12/schema'
+  type: object
+  properties:
+    destination_dir:
+      type: string
+      description: ''
+      default: /blockstorage/dicoms_complete
+      originalType: string
+    inprogress_dir:
+      type: string
+      description: ''
+      default: /blockstorage/dicoms_inprogress
+      originalType: string
+  required: []
