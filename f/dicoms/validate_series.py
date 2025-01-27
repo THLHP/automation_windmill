@@ -70,7 +70,7 @@ cur.execute("""
     where
         s.download_status = 'complete'
         and (s.validation = ''
-            or s.validation is null or s.validation = 'failed');
+            or s.validation is null or s.validation = 'failed') order by s.series_datetime desc limit 100;
 """)
 
 series_list = cur.fetchall()

@@ -21,19 +21,19 @@ cur = conn.cursor()
 # Query all series with download status 'complete' grouped by seriesdescription
 cur.execute("""
     select
-        p.patient_id,
+        st.patient_id,
         s.seriesdescription,
         (
             select string_agg(value, '.' order by idx)
             from unnest(string_to_array(s.seriesinstanceuid, '.')) with ordinality as t(value, idx)
             where idx > 6
-        ) as seriesuid
+        ) as seriesuid,
+        s.validation,
+        s.compression_status
     from
         fieldsite.series s
     join fieldsite.studies st on
         s.studyid = st.studyid
-    join fieldsite.patients p on
-        st.patient_id = p.patient_id
     where
         s.validation = 'complete'
         and (s.compression_status = ''
