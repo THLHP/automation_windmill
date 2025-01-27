@@ -55,12 +55,11 @@ cur.execute("""
     select
         p.patient_id,
         s.seriesdescription,
-        array_to_string(
-        array[
-        (string_to_array(s.seriesinstanceuid, '.'))[array_length(string_to_array(s.seriesinstanceuid, '.'), 1) - 1],
-        (string_to_array(s.seriesinstanceuid, '.'))[array_length(string_to_array(s.seriesinstanceuid, '.'), 1)]
-        ], 
-        '.') as seriesuid,
+        (
+        select string_agg(value, '.' order by idx)
+        from unnest(string_to_array(s.seriesinstanceuid, '.')) with ordinality as t(value, idx)
+        where idx > 6
+        ) as seriesuid,
         s.numberofimages
     from
         fieldsite.series s

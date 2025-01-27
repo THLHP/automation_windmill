@@ -68,7 +68,9 @@ def handle_store(event):
     # Define the filename and save the dataset
     patient_id = ds.PatientID
     series_instance_uid = ds.SeriesInstanceUID
-    series_instance_uid = '.'.join(series_instance_uid.split('.')[-2:])
+    # Split the SeriesInstanceUID by '.' and exclude the first 6 groups
+    series_instance_uid_parts = series_instance_uid.split('.')
+    series_instance_uid = '.'.join(series_instance_uid_parts[6:])
     sop_instance_uid = ds.SOPInstanceUID
     series_name = ds.SeriesDescription if 'SeriesDescription' in ds else 'Unknown_Series'
     series_name = series_name.replace(' ', '_')
