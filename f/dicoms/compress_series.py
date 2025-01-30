@@ -4,6 +4,7 @@ import psycopg2
 import os
 import glob
 import zipfile
+import shutil
 
 db_credentials = json.loads(wmill.get_variable("f/kobo/vultr_db"))
 db_credentials = db_credentials["db_settings"]
@@ -105,6 +106,11 @@ def main(
                         zipf.write(file_path, rel_path)
 
             print(f"Compression of {series_dir} complete")
+            
+            # Delete the original directory after successful compression
+            shutil.rmtree(series_dir)
+            print(f"Original directory {series_dir} deleted")
+
             report["status"] = "complete"
             update_validation_status(patient_id, seriesuid, "complete")
         else:
