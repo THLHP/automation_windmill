@@ -1,0 +1,330 @@
+summary: ''
+value:
+  fullscreen: false
+  grid:
+    - '12':
+        fixed: true
+        fullHeight: false
+        h: 2
+        w: 12
+        x: 0
+        'y': 0
+      '3':
+        fixed: true
+        fullHeight: false
+        h: 2
+        w: 6
+        x: 0
+        'y': 0
+      id: topbar
+      data:
+        id: topbar
+        type: containercomponent
+        actions: []
+        configuration: {}
+        customCss:
+          container:
+            class: '!p-0'
+            style: ''
+        numberOfSubgrids: 1
+    - '12':
+        fixed: false
+        fullHeight: false
+        h: 10
+        w: 12
+        x: 0
+        'y': 2
+      '3':
+        fixed: false
+        fullHeight: false
+        h: 10
+        w: 3
+        x: 0
+        'y': 2
+      id: a
+      data:
+        id: a
+        type: aggridinfinitecomponent
+        actions: []
+        componentInput:
+          type: runnable
+          autoRefresh: true
+          fields:
+            database:
+              type: static
+              value: '$res:f/dicoms/thlhp_database'
+              fieldType: object
+              format: resource-postgresql
+            isDesc:
+              type: evalv2
+              expr: a.params.isDesc
+              fieldType: string
+            limit:
+              type: evalv2
+              expr: a.params.limit
+              fieldType: string
+            offset:
+              type: evalv2
+              expr: a.params.offset
+              fieldType: string
+            orderBy:
+              type: evalv2
+              expr: a.params.orderBy
+              fieldType: string
+            search:
+              type: evalv2
+              expr: a.params.search
+              fieldType: string
+          fieldType: any
+          recomputeOnInputChanged: true
+          runnable:
+            type: runnableByName
+            name: Inline Script 0
+            inlineScript:
+              content: '!inline inline_script_0.inline_script.pg.sql'
+              lock: ''
+              language: postgresql
+              path: f/dicoms/tagger/Inline_Script_0
+              schema:
+                $schema: 'https://json-schema.org/draft/2020-12/schema'
+                type: object
+                properties:
+                  database:
+                    type: object
+                    description: ''
+                    format: resource-postgresql
+                required:
+                  - database
+        configuration:
+          allEditable:
+            type: static
+            value: false
+          columnDefs:
+            type: static
+            value:
+              - field: correct_patient_id
+                flex: 1
+                headerName: correct_patient_id
+              - field: seriesdescription
+                flex: 1
+                headerName: seriesdescription
+              - cellRendererType: text
+                field: series_datetime
+                flex: 1
+                headerName: series_datetime
+                sort: null
+                valueFormatter: |-
+                  new Date(value).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                      })
+          compactness:
+            type: static
+            value: normal
+          customActionsHeader:
+            type: static
+          extraConfig:
+            type: static
+            value: {}
+          flex:
+            type: static
+            value: true
+          footer:
+            type: static
+            value: true
+          multipleSelectable:
+            type: static
+            value: false
+          rowIdCol:
+            type: static
+            value: ''
+          rowMultiselectWithClick:
+            type: static
+            value: true
+          searchEnabled:
+            type: static
+            value: false
+          selectFirstRowByDefault:
+            type: static
+            value: true
+          wrapActions:
+            type: static
+            value: false
+        customCss:
+          container:
+            class: ''
+            style: ''
+    - '12':
+        fixed: false
+        fullHeight: false
+        h: 21
+        w: 7
+        x: 0
+        'y': 12
+      '3':
+        fixed: false
+        fullHeight: false
+        h: 8
+        w: 2
+        x: 0
+        'y': 20
+      id: c
+      data:
+        id: c
+        type: containercomponent
+        actions: []
+        configuration: {}
+        customCss:
+          container:
+            class: ''
+            style: ''
+        numberOfSubgrids: 1
+    - '12':
+        fixed: false
+        fullHeight: false
+        h: 9
+        w: 5
+        x: 7
+        'y': 12
+      '3':
+        fixed: false
+        fullHeight: false
+        h: 4
+        w: 3
+        x: 0
+        'y': 12
+      id: b
+      data:
+        id: b
+        type: imagecomponent
+        actions: []
+        configuration:
+          altText:
+            type: static
+            value: ''
+          imageFit:
+            type: static
+            value: contain
+          source:
+            type: evalv2
+            value: /logo.svg
+            connections: []
+            expr: ''
+          sourceKind:
+            type: static
+            value: url
+        customCss:
+          image:
+            class: ''
+            style: ''
+  hiddenInlineScripts:
+    - type: runnableByName
+      name: Background Runnable 0
+      fields: {}
+      hidden: true
+      recomputeIds: []
+  hideLegacyTopBar: true
+  mobileViewOnSmallerScreens: false
+  norefreshbar: false
+  subgrids:
+    c-0: []
+    topbar-0:
+      - '12':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 6
+          x: 0
+          'y': 0
+        '3':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 6
+          x: 0
+          'y': 0
+        id: title
+        data:
+          id: title
+          type: textcomponent
+          actions: []
+          componentInput:
+            type: templatev2
+            connections:
+              - id: summary
+                componentId: ctx
+            eval: '${ctx.summary}'
+            fieldType: template
+          configuration:
+            copyButton:
+              type: static
+              value: false
+            disableNoText:
+              type: static
+              value: true
+              fieldType: boolean
+            style:
+              type: static
+              value: Body
+            tooltip:
+              type: evalv2
+              value: ''
+              connections:
+                - id: author
+                  componentId: ctx
+              expr: '`Author: ${ctx.author}`'
+              fieldType: text
+          customCss:
+            container:
+              class: ''
+              style: ''
+            text:
+              class: text-xl font-semibold whitespace-nowrap truncate
+              style: ''
+          horizontalAlignment: left
+          verticalAlignment: center
+      - '12':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 6
+          x: 6
+          'y': 0
+        '3':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 3
+          x: 0
+          'y': 1
+        id: recomputeall
+        data:
+          id: recomputeall
+          type: recomputeallcomponent
+          actions: []
+          configuration: {}
+          customCss:
+            container:
+              class: ''
+              style: ''
+          horizontalAlignment: right
+          menuItems: []
+          verticalAlignment: center
+  theme:
+    type: path
+    path: f/app_themes/theme_0
+  unusedInlineScripts: []
+policy:
+  execution_mode: publisher
+  s3_inputs: []
+  triggerables_v2:
+    'a:rawscript/4c868371fb54e6bf46a4f40fab1b9fbddb39791b97080380963b229aca4dc8d0':
+      allow_user_resources: []
+      one_of_inputs: {}
+      static_inputs:
+        database: '$res:f/dicoms/thlhp_database'
+    'bg_0:rawscript/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855':
+      allow_user_resources: []
+      one_of_inputs: {}
+      static_inputs: {}

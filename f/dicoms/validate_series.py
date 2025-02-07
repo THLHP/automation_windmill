@@ -48,6 +48,16 @@ def update_validation_status(patient_id, seriesuid, status):
             WHERE patient_id = %s
         )
     """, (status, status, f"%{seriesuid}", patient_id))
+
+    if status == 'failed':
+        cur.execute("""
+        UPDATE fieldsite.series
+        SET validation = '', date_modified = CURRENT_TIMESTAMP, download_status = %s
+        WHERE seriesinstanceuid LIKE %s AND studyid IN (
+            SELECT studyid FROM fieldsite.studies
+            WHERE patient_id = %s
+        )
+        """, (status, f"%{seriesuid}", patient_id))
     conn.commit()
 
 # Query all series with download status 'complete' grouped by seriesdescription
@@ -70,7 +80,7 @@ cur.execute("""
     where
         s.download_status = 'complete'
         and (s.validation = ''
-            or s.validation is null or s.validation = 'failed') order by s.series_datetime desc limit 100;
+            or s.validation is null or s.validation = 'failed') order by s.series_datetime desc;
 """)
 
 series_list = cur.fetchall()

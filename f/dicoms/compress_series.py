@@ -28,9 +28,7 @@ cur.execute("""
             select string_agg(value, '.' order by idx)
             from unnest(string_to_array(s.seriesinstanceuid, '.')) with ordinality as t(value, idx)
             where idx > 6
-        ) as seriesuid,
-        s.validation,
-        s.compression_status
+        ) as seriesuid
     from
         fieldsite.series s
     join fieldsite.studies st on
@@ -40,7 +38,7 @@ cur.execute("""
         and (s.compression_status = ''
             or s.compression_status is null
             or s.compression_status = 'failed')
-    order by s.series_datetime desc limit 100;
+    order by s.series_datetime desc;
 """)
 
 series_list = cur.fetchall()
