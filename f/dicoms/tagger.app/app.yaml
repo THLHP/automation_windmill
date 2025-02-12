@@ -1,5 +1,37 @@
-summary: ''
+summary: 'Categorize and tag scans. '
 value:
+  css:
+    containercomponent:
+      container:
+        class: ''
+        style: ''
+    htmlcomponent:
+      container:
+        class: ''
+        style: ''
+    schemaformcomponent:
+      description:
+        class: ''
+        style: ''
+      container:
+        class: ''
+        style: ''
+      label:
+        class: ''
+        style: ''
+    selectcomponent:
+      input:
+        class: ''
+        style: ''
+        tooltip: >-
+          https://github.com/rob-balfre/svelte-select/blob/master/docs/theming_variables.md
+    textcomponent:
+      container:
+        class: ''
+        style: ''
+      text:
+        class: ''
+        style: ''
   fullscreen: false
   grid:
     - '12':
@@ -79,12 +111,12 @@ value:
           recomputeOnInputChanged: true
           runnable:
             type: runnableByName
-            name: Inline Script 0
+            name: Query unvalidated rows
             inlineScript:
-              content: '!inline inline_script_0.inline_script.pg.sql'
+              content: '!inline query_unvalidated_rows.inline_script.pg.sql'
               lock: ''
               language: postgresql
-              path: f/dicoms/tagger/Inline_Script_0
+              path: f/dicoms/tagger/Query_unvalidated_rows
               schema:
                 $schema: 'https://json-schema.org/draft/2020-12/schema'
                 type: object
@@ -183,52 +215,646 @@ value:
     - '12':
         fixed: false
         fullHeight: false
-        h: 9
+        h: 22
         w: 5
         x: 7
         'y': 12
       '3':
         fixed: false
         fullHeight: false
-        h: 4
-        w: 3
+        h: 8
+        w: 2
         x: 0
-        'y': 12
-      id: b
+        'y': 28
+      id: e
       data:
-        id: b
-        type: imagecomponent
+        id: e
+        type: containercomponent
         actions: []
-        configuration:
-          altText:
-            type: static
-            value: ''
-          imageFit:
-            type: static
-            value: contain
-          source:
-            type: evalv2
-            value: /logo.svg
-            connections: []
-            expr: ''
-          sourceKind:
-            type: static
-            value: url
+        configuration: {}
         customCss:
-          image:
+          container:
             class: ''
-            style: ''
+            style: 'overflow: hidden;'
+        numberOfSubgrids: 1
   hiddenInlineScripts:
-    - type: runnableByName
-      name: Background Runnable 0
-      fields: {}
-      hidden: true
+    - type: runnableByPath
+      name: f/dicoms/get_image_s3
+      autoRefresh: true
+      fields:
+        selected_row_image:
+          type: evalv2
+          connections:
+            - id: selectedRow
+              componentId: a
+          expr: a.selectedRow.image_url
+          fieldType: object
+      path: f/dicoms/get_image_s3
       recomputeIds: []
+      recomputeOnInputChanged: true
+      runType: script
+      schema:
+        $schema: 'https://json-schema.org/draft/2020-12/schema'
+        type: object
+        order:
+          - selected_row_image
+        properties:
+          selected_row_image:
+            type: object
+            description: ''
+            default: null
+        required:
+          - selected_row_image
   hideLegacyTopBar: true
   mobileViewOnSmallerScreens: false
   norefreshbar: false
   subgrids:
-    c-0: []
+    c-0:
+      - '12':
+          fixed: false
+          fullHeight: false
+          h: 19
+          w: 12
+          x: 0
+          'y': 0
+        '3':
+          fixed: false
+          fullHeight: false
+          h: 8
+          w: 3
+          x: 0
+          'y': 1
+        id: form
+        data:
+          id: form
+          type: schemaformcomponent
+          actions: []
+          componentInput:
+            type: static
+            value:
+              order:
+                - file_type
+                - body_part_examined
+                - reconstruction
+                - notes
+                - follow_up
+                - author_name
+              properties:
+                author_name:
+                  type: string
+                  description: This should automatically populate with your email address
+                  default: ''
+                  disabled: true
+                  nullable: false
+                  title: Tagger person
+                body_part_examined:
+                  type: string
+                  description: >-
+                    This field is part of the DICOM standard hence we should
+                    fill it out as well. Per the Sutherlands, this should most
+                    likely be head, body or heart in our scans.
+                  default: ''
+                  enum:
+                    - unknown
+                  enumLabels:
+                    unknown: Unknown
+                  title: Body part examined
+                file_type:
+                  type: string
+                  description: >-
+                    Some scans are scouts (low quality) or are dosage reports.
+                    The purpose of this field is to broadly categorize them as
+                    such.
+                  default: investigate
+                  enum:
+                    - scan
+                    - scout
+                    - dosage
+                    - other
+                    - investigate
+                  enumLabels:
+                    dosage: Dosage Report
+                    investigate: Don't know
+                    other: Other
+                    scan: Scan
+                    scout: Scout
+                  nullable: false
+                  title: Scan type
+                follow_up:
+                  type: boolean
+                  description: >-
+                    If there is something confusing about this scan that you
+                    want to follow up on.
+                  default: false
+                  title: Follow up
+                notes:
+                  type: string
+                  description: Comments that don't fit in other sections
+                  default: ''
+                  disableVariablePicker: true
+                  minRows: 4
+                  title: Notes
+                reconstruction:
+                  type: string
+                  description: >-
+                    The same organ can have scan with reconstruction of type
+                    bone, soft tissue or lungs (and possibly more).
+                  default: ''
+                  disableVariablePicker: true
+                  title: Reconstruction
+              required:
+                - file_type
+                - author_name
+            fieldType: schema
+          configuration:
+            defaultValues:
+              type: evalv2
+              value:
+                author_name: '`{hello}`'
+              connections:
+                - id: email
+                  componentId: ctx
+              expr: 'return {author_name: ctx.email}'
+            displayType:
+              type: static
+              value: false
+            dynamicEnums:
+              type: static
+              value: {}
+            largeGap:
+              type: static
+              value: false
+          customCss:
+            description:
+              class: ''
+              style: ''
+            container:
+              class: ''
+              style: ''
+            label:
+              class: ''
+              style: ''
+      - '12':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 4
+          x: 0
+          'y': 19
+        '3':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 1
+          x: 0
+          'y': 19
+        id: k
+        data:
+          id: k
+          type: buttoncomponent
+          actions: []
+          componentInput:
+            type: runnable
+            autoRefresh: false
+            fields:
+              $6:
+                type: evalv2
+                value: null
+                connections:
+                  - id: values
+                    componentId: form
+                expr: form.values.follow_up
+                fieldType: boolean
+              authored_by:
+                type: evalv2
+                value: null
+                connections:
+                  - id: values
+                    componentId: form
+                expr: form.values
+                fieldType: string
+              bodypartexamined:
+                type: evalv2
+                value: null
+                connections:
+                  - id: values
+                    componentId: form
+                expr: form.values.body_part_examined
+                fieldType: string
+              database:
+                type: static
+                value: '$res:f/dicoms/thlhp_database'
+                fieldType: object
+                format: resource-postgresql
+              notes:
+                type: evalv2
+                value: null
+                connections:
+                  - id: values
+                    componentId: form
+                expr: form.values.notes
+                fieldType: string
+              series_id:
+                type: evalv2
+                value: null
+                connections:
+                  - id: selectedRow
+                    componentId: a
+                expr: a.selectedRow.series_id
+                fieldType: integer
+              tags:
+                type: evalv2
+                value: null
+                connections:
+                  - id: values
+                    componentId: form
+                expr: form.values
+                fieldType: object
+            fieldType: any
+            recomputeOnInputChanged: false
+            runnable:
+              type: runnableByName
+              name: insert to db
+              inlineScript:
+                content: '!inline insert_to_db.inline_script.pg.sql'
+                lock: ''
+                language: postgresql
+                path: f/dicoms/tagger/insert_to_db
+                schema:
+                  $schema: 'https://json-schema.org/draft/2020-12/schema'
+                  type: object
+                  properties:
+                    $6:
+                      type: boolean
+                      description: ''
+                      default: null
+                      originalType: string
+                    authored_by:
+                      type: string
+                      description: ''
+                      default: null
+                      originalType: string
+                    bodypartexamined:
+                      type: string
+                      description: ''
+                      default: null
+                      originalType: string
+                    database:
+                      type: object
+                      description: ''
+                      format: resource-postgresql
+                    notes:
+                      type: string
+                      description: ''
+                      default: null
+                      originalType: string
+                    series_id:
+                      type: integer
+                      description: ''
+                      default: null
+                      originalType: string
+                    tags:
+                      type: object
+                      description: ''
+                      default: null
+                      properties: {}
+                  required:
+                    - database
+                    - series_id
+                    - bodypartexamined
+                    - tags
+                    - authored_by
+                    - notes
+                    - $6
+          configuration:
+            afterIcon:
+              type: static
+              value: ''
+            beforeIcon:
+              type: static
+              value: ''
+            color:
+              type: static
+              value: blue
+            confirmationModal:
+              type: oneOf
+              configuration:
+                confirmationModal:
+                  description:
+                    type: static
+                    value: Are you sure?
+                  confirmationText:
+                    type: static
+                    value: Confirm
+                  title:
+                    type: static
+                    value: Title
+                none: {}
+              selected: none
+            disabled:
+              type: static
+              value: false
+            fillContainer:
+              type: static
+              value: true
+            label:
+              type: static
+              value: Submit
+            onError:
+              type: oneOf
+              configuration:
+                close:
+                  id:
+                    type: static
+                    value: ''
+                errorOverlay: {}
+                gotoUrl:
+                  newTab:
+                    type: static
+                    value: true
+                  url:
+                    type: static
+                    value: ''
+                open:
+                  id:
+                    type: static
+                    value: ''
+                sendErrorToast:
+                  appendError:
+                    type: static
+                    value: true
+                  message:
+                    type: static
+                    value: >-
+                      An error occurred, don't know where don't know when but
+                      some sunny day.
+                setTab:
+                  setTab:
+                    type: static
+                    value: []
+              selected: sendErrorToast
+            onSuccess:
+              type: oneOf
+              configuration:
+                clearFiles:
+                  id:
+                    type: static
+                    value: ''
+                close:
+                  id:
+                    type: static
+                    value: ''
+                closeModal:
+                  modalId:
+                    type: static
+                    value: ''
+                gotoUrl:
+                  newTab:
+                    type: static
+                    value: true
+                  url:
+                    type: static
+                    value: ''
+                none: {}
+                open:
+                  id:
+                    type: static
+                    value: ''
+                openModal:
+                  modalId:
+                    type: static
+                    value: ''
+                sendToast:
+                  message:
+                    type: static
+                    value: Submitted!
+                setTab:
+                  setTab:
+                    type: static
+                    value: []
+              selected: sendToast
+            size:
+              type: static
+              value: xs
+            triggerOnAppLoad:
+              type: static
+              value: false
+          customCss:
+            button:
+              class: ''
+              style: ''
+            container:
+              class: ''
+              style: ''
+          horizontalAlignment: center
+          recomputeIds: []
+          verticalAlignment: center
+    e-0:
+      - '12':
+          fixed: false
+          fullHeight: false
+          h: 12
+          w: 12
+          x: 0
+          'y': 0
+        '3':
+          fixed: false
+          fullHeight: false
+          h: 4
+          w: 3
+          x: 2
+          'y': 1
+        id: b
+        data:
+          id: b
+          type: imagecomponent
+          actions: []
+          configuration:
+            altText:
+              type: static
+              value: ''
+            imageFit:
+              type: static
+              value: contain
+            source:
+              type: evalv2
+              value: /logo.svg
+              connections:
+                - id: result
+                  componentId: bg_0
+              expr: bg_0.result
+            sourceKind:
+              type: static
+              value: jpeg encoded as base64
+          customCss:
+            image:
+              class: ''
+              style: ''
+      - '12':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 12
+          x: 0
+          'y': 12
+        '3':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 1
+          x: 1
+          'y': 8
+        id: d
+        data:
+          id: d
+          type: textcomponent
+          actions: []
+          componentInput:
+            type: evalv2
+            autoRefresh: true
+            connections:
+              - id: loading
+                componentId: bg_0
+            eval: 'Hello ${ctx.username}'
+            expr: '`Image status: ${bg_0.loading ? ''refreshing'' : ''loaded!''}`;'
+            fields: {}
+            fieldType: template
+            hideRefreshButton: false
+            recomputeOnInputChanged: true
+            runnable:
+              type: runnableByName
+              name: Eval of d
+              inlineScript:
+                content: '!inline eval_of_d.inline_script.frontend.js'
+                language: frontend
+                path: f/dicoms/tagger/Eval_of_d
+                refreshOn: []
+                suggestedRefreshOn: []
+          configuration:
+            copyButton:
+              type: static
+              value: false
+            disableNoText:
+              type: static
+              value: false
+            style:
+              type: static
+              value: Caption
+            tooltip:
+              type: static
+              value: ''
+          customCss:
+            container:
+              class: ''
+              style: ''
+            text:
+              class: text-center
+              style: ''
+          horizontalAlignment: left
+          verticalAlignment: top
+      - '12':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 12
+          x: 0
+          'y': 13
+        '3':
+          fixed: false
+          fullHeight: false
+          h: 1
+          w: 1
+          x: 0
+          'y': 0
+        id: f
+        data:
+          id: f
+          type: textcomponent
+          actions: []
+          componentInput:
+            type: templatev2
+            connections: []
+            eval: Scan information
+            fieldType: template
+          configuration:
+            copyButton:
+              type: static
+              value: false
+            disableNoText:
+              type: static
+              value: false
+            style:
+              type: static
+              value: Title
+            tooltip:
+              type: static
+              value: ''
+          customCss:
+            container:
+              class: ''
+              style: ''
+            text:
+              class: ''
+              style: ''
+          horizontalAlignment: left
+          verticalAlignment: top
+      - '12':
+          fixed: false
+          fullHeight: false
+          h: 7
+          w: 12
+          x: 0
+          'y': 14
+        '3':
+          fixed: false
+          fullHeight: false
+          h: 2
+          w: 1
+          x: 11
+          'y': 6
+        id: g
+        data:
+          id: g
+          type: htmlcomponent
+          actions: []
+          componentInput:
+            type: templatev2
+            connections:
+              - id: selectedRow
+                componentId: a
+            eval: >-
+              <ul>
+
+              <li><strong>PatientID:</strong>
+              ${a.selectedRow.correct_patient_id}</li>
+
+              <li><strong>StudyID: </strong> ${a.selectedRow.studyid}</li>
+
+              <li><strong>Scan Name: </strong>
+              ${a.selectedRow.seriesdescription}</li>
+
+              <li><strong>Number of images: </strong>
+              ${a.selectedRow.numberofimages}</li>
+
+              <li><strong>Technician: </strong>
+              ${a.selectedRow.patient_comments}</li>
+
+              <li><strong>Body part examined: </strong>
+              ${a.selectedRow.bodypartexamined}</li>
+
+              <li><strong>Institute name: </strong>
+              ${a.selectedRow.institutionname}</li>
+
+              <li><strong>Institute department name: </strong>
+              ${a.selectedRow.institutionaldepartmentname}</li>
+
+              </ul>
+            fieldType: template
+          configuration: {}
+          customCss:
+            container:
+              class: ''
+              style: 'overflow: hidden;'
     topbar-0:
       - '12':
           fixed: false
@@ -319,12 +945,17 @@ policy:
   execution_mode: publisher
   s3_inputs: []
   triggerables_v2:
-    'a:rawscript/4c868371fb54e6bf46a4f40fab1b9fbddb39791b97080380963b229aca4dc8d0':
+    'a:rawscript/8fdc36950929df2301c66393dcd5bdaed888cfd6ff686c0242271db45cf436ef':
       allow_user_resources: []
       one_of_inputs: {}
       static_inputs:
         database: '$res:f/dicoms/thlhp_database'
-    'bg_0:rawscript/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855':
+    'bg_0:script/f/dicoms/get_image_s3':
       allow_user_resources: []
       one_of_inputs: {}
       static_inputs: {}
+    'k:rawscript/15a06f50f290fbbc8a68c8e30f8468ce5361adf2694dcba7b4aa652fb0ea5090':
+      allow_user_resources: []
+      one_of_inputs: {}
+      static_inputs:
+        database: '$res:f/dicoms/thlhp_database'

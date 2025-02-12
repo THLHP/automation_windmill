@@ -1,0 +1,1 @@
+return `{bg_0.loading}`

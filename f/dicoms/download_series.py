@@ -27,6 +27,7 @@ from datetime import datetime
 from contextlib import contextmanager
 import time
 from multiprocessing import Pool
+import re
 
 pacs_credentials = wmill.get_resource("f/dicoms/trinidad_pacs")
 db_credentials = json.loads(wmill.get_variable("f/kobo/vultr_db"))
@@ -73,6 +74,7 @@ def handle_store(event):
     series_instance_uid = '.'.join(series_instance_uid_parts[6:])
     sop_instance_uid = ds.SOPInstanceUID
     series_name = ds.SeriesDescription if 'SeriesDescription' in ds else 'Unknown_Series'
+    series_name = re.sub(r'[^\w\.\-]', '', series_name)
     series_name = series_name.replace(' ', '_')
 
     series_dir = os.path.join(storage_dir, patient_id, series_name + '___' + series_instance_uid)
