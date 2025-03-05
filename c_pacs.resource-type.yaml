@@ -1,0 +1,27 @@
+description: PACS credentials
+format_extension: null
+schema:
+  type: object
+  additionalProperties: false
+  order:
+    - ip
+    - port
+    - aet
+    - local_aet
+  properties:
+    aet:
+      type: string
+      description: ''
+      default: ''
+    ip:
+      type: string
+      default: ''
+      format: ipv4
+    local_aet:
+      type: string
+      description: ''
+      default: ''
+    port:
+      type: integer
+      description: ''
+  required: []

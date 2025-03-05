@@ -1,7 +1,8 @@
-summary: null
+summary: ''
 display_name: kobo
 extra_perms:
   g/thlhp_admin: false
+  g/thlhp_manager: true
   u/SuhailGhafoor: true
 owners:
   - u/SuhailGhafoor

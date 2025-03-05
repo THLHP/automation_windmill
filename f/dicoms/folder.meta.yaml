@@ -1,6 +1,7 @@
 summary: Scripts related to THLHP dicom processing pipeline
 display_name: dicoms
 extra_perms:
+  g/thlhp_manager: true
   u/SuhailGhafoor: true
 owners:
   - u/SuhailGhafoor

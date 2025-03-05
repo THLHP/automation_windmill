@@ -1,0 +1,21 @@
+summary: ''
+description: ''
+lock: '!inline f/dicoms/extract_dicoms.script.lock'
+has_preprocessor: false
+kind: script
+no_main_func: false
+schema:
+  $schema: 'https://json-schema.org/draft/2020-12/schema'
+  type: object
+  properties:
+    dicoms_dir:
+      type: string
+      description: ''
+      default: /dicoms/download_complete
+      originalType: string
+    validation_dir:
+      type: string
+      description: ''
+      default: /dicoms/validated_scans
+      originalType: string
+  required: []
