@@ -206,9 +206,12 @@ value:
                 minRows: 3
               unvalidated_patient_id:
                 type: string
-                description: ''
+                description: 'id that is being corrected, select from list above'
                 default: ''
-            required: []
+                disabled: true
+                nullable: false
+            required:
+              - unvalidated_patient_id
           fieldType: schema
         configuration:
           defaultValues:
@@ -302,8 +305,8 @@ value:
           autoRefresh: false
           fields:
             authored_by:
-              type: static
-              value: dankcummings@gmail.com
+              type: evalv2
+              value: ''
               connections:
                 - id: author
                   componentId: ctx
@@ -720,5 +723,4 @@ policy:
       allow_user_resources: []
       one_of_inputs: {}
       static_inputs:
-        authored_by: dankcummings@gmail.com
         database: '$res:f/dicoms/thlhp_database'
