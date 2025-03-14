@@ -59,7 +59,7 @@ inner join fieldsite.patientid_corrections pc on
 where
 	s.keep_status = 'keep'
 	and (s.extract_status = ''
-		or s.extract_status is null)
+		or s.extract_status is null) order by s.series_datetime desc
     limit 500;
 """)
 
@@ -79,7 +79,7 @@ series_list = cur.fetchall()
 
 result = []
 
-def update_dicom_tags(dicom_path, corrected_patient_id, corrected_patient_sex, corrected_patient_name):
+def update_dicom_tags(dicom_path, patient_id, corrected_patient_id, corrected_patient_sex, corrected_patient_name):
     """
     Updates the 'patient_id', 'patient_sex' and 'patient_name' fields in a DICOM file.
     Args:
@@ -94,7 +94,9 @@ def update_dicom_tags(dicom_path, corrected_patient_id, corrected_patient_sex, c
         # Read the DICOM file with write mode
         ds = pydicom.dcmread(dicom_path, force=True)
 
-        logger.info(f'Updating: {corrected_patient_id}, {corrected_patient_name}, {corrected_patient_sex}')
+        effective_patient_id = corrected_patient_id if corrected_patient_id is not None and corrected_patient_id.strip() else patient_id
+
+        logger.info(f'Updating: {effective_patient_id}, {corrected_patient_name}, {corrected_patient_sex}')
         
         # Update tags if corrections are not empty strings or None
         if corrected_patient_id is not None and corrected_patient_id.strip():
@@ -158,21 +160,24 @@ def main(
                 update_success = True
                 for dicom_file in dicom_files:
                     logger.info(f'Updating file {dicom_file}')
-                    if not update_dicom_tags(dicom_file, corrected_patient_id, corrected_patient_sex, corrected_patient_name):
+                    if not update_dicom_tags(dicom_file, patient_id, corrected_patient_id, corrected_patient_sex, corrected_patient_name):
                         update_success = False
                         break
 
                 # Rename directories with patient_id to corrected_patient_id
-                for root, dirs, files in os.walk(temp_dir):
-                    for dir in dirs:
-                        if dir == patient_id:
-                            new_path = os.path.join(root, corrected_patient_id)
-                            old_path = os.path.join(root, dir)
-                            try:
-                                logger.info(f'Renaming directory {old_path} to {new_path}')
-                                os.rename(old_path, new_path)
-                            except Exception as e:
-                                logger.error(f'Failed to rename directory: {str(e)}')
+                if corrected_patient_id is not None:
+                    for root, dirs, files in os.walk(temp_dir):
+                        for dir in dirs:
+                            if dir == patient_id:
+                                new_path = os.path.join(root, corrected_patient_id)
+                                old_path = os.path.join(root, dir)
+                                try:
+                                    logger.info(f'Renaming directory {old_path} to {new_path}')
+                                    os.rename(old_path, new_path)
+                                except Exception as e:
+                                    logger.error(f'Failed to rename directory: {str(e)}')
+                else:
+                    logger.info(f"Keeping original directory names for patient {patient_id} - corrected ID is None")
                 
                 if update_success:
                     logger.info("Moving extracted files to validated scans directory")

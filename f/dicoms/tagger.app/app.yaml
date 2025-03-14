@@ -951,7 +951,7 @@ policy:
   execution_mode: publisher
   s3_inputs: []
   triggerables_v2:
-    'a:rawscript/72ad38cc0c2e55a3ca8b4d86b529571b4b77e63a2a3c53ac9df9faa5e721e91e':
+    'a:rawscript/c2f0482c77d48e118666a5b600dd7cef718322304af9fed80d23115aec4b5c0f':
       allow_user_resources: []
       one_of_inputs: {}
       static_inputs:
