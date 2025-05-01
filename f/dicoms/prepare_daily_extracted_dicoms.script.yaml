@@ -1,0 +1,31 @@
+summary: ''
+description: >-
+  Takes compressed scans from previous 48 hours and extracts them to destination
+  directory.
+lock: '!inline f/dicoms/prepare_daily_extracted_dicoms.script.lock'
+concurrency_time_window_s: 0
+kind: script
+schema:
+  $schema: 'https://json-schema.org/draft/2020-12/schema'
+  type: object
+  properties:
+    dry_run:
+      type: boolean
+      description: ''
+      default: true
+    source_dir:
+      type: string
+      description: ''
+      default: /dicoms/download_complete
+      originalType: string
+    target_dir:
+      type: string
+      description: ''
+      default: /dicoms/download_complete_recent
+      originalType: string
+    time_window:
+      type: integer
+      description: ''
+      default: 48
+  required: []
+tag: asuvm

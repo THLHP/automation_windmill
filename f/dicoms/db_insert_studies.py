@@ -36,7 +36,7 @@ LOCAL_AET = pacs_credentials['local_aet']
 cur = conn.cursor()
 print("Getting patients from DB")
 # Query all patients from the patients table
-cur.execute("SELECT patient_id FROM fieldsite.patients")
+cur.execute("SELECT patient_id FROM fieldsite.patients where date_created >= CURRENT_DATE - interval '5 day'")
 patients = cur.fetchall()
 
 patient_ids = [patient[0] for patient in patients]

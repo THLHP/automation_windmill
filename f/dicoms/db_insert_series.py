@@ -39,7 +39,7 @@ series_data = []
 cur = conn.cursor()
 
 # Query all studies from the studies table
-cur.execute("SELECT studyid, studyinstanceuid FROM fieldsite.studies")
+cur.execute("SELECT studyid, studyinstanceuid FROM fieldsite.studies WHERE date_created >= CURRENT_DATE - INTERVAL '5 day'")
 studies = cur.fetchall()
 
 study_map = {study[1]: study[0] for study in studies}  # Map studyinstanceuid to studyid
