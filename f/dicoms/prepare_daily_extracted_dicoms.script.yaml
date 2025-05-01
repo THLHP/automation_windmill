@@ -13,6 +13,10 @@ schema:
       type: boolean
       description: ''
       default: true
+    HOURS_TO_CHECK:
+      type: integer
+      description: ''
+      default: 48
     source_dir:
       type: string
       description: ''
@@ -23,9 +27,5 @@ schema:
       description: ''
       default: /dicoms/download_complete_recent
       originalType: string
-    time_window:
-      type: integer
-      description: ''
-      default: 48
   required: []
 tag: asuvm
