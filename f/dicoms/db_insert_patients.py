@@ -10,6 +10,10 @@ from pydicom.dataset import Dataset
 from datetime import datetime
 import os
 import wmill
+import f.dicoms.upload_file as uploader
+import csv
+from io import StringIO
+
 
 # Super complex script for detecting patients that are in THLHP cohort
 def detect_thlhp_patient(patient, custom_id):
@@ -35,8 +39,12 @@ conn = psycopg2.connect(
 )
 
 def main(
-        custom_patient_ids = []
+        bucket: uploader.s3,
+        upload_to_s3: bool,
+        custom_patient_ids = [],
 ):
+    if upload_to_s3:
+        print("Uploading results to s3")
     print("Running with:", custom_patient_ids)
     cur = conn.cursor()
 
@@ -45,6 +53,8 @@ def main(
 
     # Add requested presentation context for C-FIND operation
     ae.add_requested_context(PatientRootQueryRetrieveInformationModelFind)
+
+    patient_export_data = []  # List to hold all patient info with THLHP flag
 
     # Define the PACS server details
     PACS_IP = pacs_credentials['ip']
@@ -75,20 +85,28 @@ def main(
                 patient_name = str(identifier.PatientName) if 'PatientName' in identifier else None
                 patient_sex = identifier.PatientSex if 'PatientSex' in identifier else None
 
-                if patient_id and detect_thlhp_patient(patient_id, custom_patient_ids):
-                    batch_data.append((patient_id, patient_name, patient_sex))
+                if patient_id:
+                    is_thlhp = detect_thlhp_patient(patient_id, custom_patient_ids)
+                    patient_export_data.append({
+                        "patient_id": patient_id,
+                        "patient_name": patient_name,
+                        "patient_sex": patient_sex,
+                        "is_thlhp": is_thlhp
+                    })
+                    if is_thlhp:
+                        batch_data.append((patient_id, patient_name, patient_sex))
 
-                    if len(batch_data) >= batch_size:
-                        extras.execute_values(cur, sql.SQL("""
-                            INSERT INTO fieldsite.patients (patient_id, patient_name, patient_sex)
-                            VALUES %s
-                            ON CONFLICT (patient_id) DO UPDATE
-                            SET patient_name = EXCLUDED.patient_name,
-                                patient_sex = EXCLUDED.patient_sex,
-                                date_modified = CURRENT_TIMESTAMP;
-                        """), batch_data)
-                        conn.commit()
-                        batch_data = []
+                        if len(batch_data) >= batch_size:
+                            extras.execute_values(cur, sql.SQL("""
+                                INSERT INTO fieldsite.patients (patient_id, patient_name, patient_sex)
+                                VALUES %s
+                                ON CONFLICT (patient_id) DO UPDATE
+                                SET patient_name = EXCLUDED.patient_name,
+                                    patient_sex = EXCLUDED.patient_sex,
+                                    date_modified = CURRENT_TIMESTAMP;
+                            """), batch_data)
+                            conn.commit()
+                            batch_data = []
 
         # Insert any remaining data in the batch
         if batch_data:
@@ -107,8 +125,26 @@ def main(
     else:
         return "Association rejected, aborted or never connected"
 
+
+
+    if upload_to_s3:
+        # Upload full patient list with THLHP detection results
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"patient_export_{timestamp}.csv"
+        output = StringIO()
+        writer = csv.DictWriter(output, fieldnames=["patient_id", "patient_name", "patient_sex", "is_thlhp"])
+        writer.writeheader()
+        writer.writerows(patient_export_data)
+
+        csv_bytes = output.getvalue().encode("utf-8")
+        uploader.main(
+            input_file=csv_bytes,
+            bucket=bucket,
+            file_name=filename
+        )
     # Close the database connection
     cur.close()
     conn.close()
 
+    return patient_export_data
     return "Patient data has been populated."
