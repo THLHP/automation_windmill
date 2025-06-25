@@ -27,7 +27,7 @@ There are two ways to setup the scripts:
 
 ## DICOM Pipeline
 
-This pipeline handles the end-to-end process of retrieving, validating, and distributing medical imaging data from a PACS system. The DICOM scripts are designed to run in parallel and can be executed in multiple instances to optimize performance based on available bandwidth. The system uses PostgreSQL as a job queue to track the status of each DICOM series throughout the pipeline. 
+This pipeline handles the end-to-end process of retrieving, validating, and distributing medical imaging data from a PACS system. The DICOM scripts are designed to run in parallel and can be executed in multiple instances to optimize performance based on available bandwidth. The system uses PostgreSQL as a job queue to track the status of each DICOM series throughout the pipeline.
 
 ![DICOM Pipeline](/images/dicom_pipeline.png)
 *High level overview of the DICOM pipeline*
@@ -41,7 +41,7 @@ This pipeline handles the end-to-end process of retrieving, validating, and dist
 ### Step 2: Download DICOM files
 - `f/dicoms/download_dicom_files.py` - Downloads the DICOM files that are missing from the local filesystem and marks them as downloaded in the database.
 - `f/dicoms/validate_series.py` - Validates the downloaded DICOM files by matching the downloaded file count with the expected file count.
-- `f/dicoms/compress_series.py` - Compresses each completed series into a single zip file. 
+- `f/dicoms/compress_series.py` - Compresses each completed series into a single zip file.
 
 
 ### Step 3: Move to central storage
