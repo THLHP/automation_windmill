@@ -23,7 +23,7 @@ Both scripts require a PostgreSQL database to function. While the DICOM data is 
 
 There are two ways to setup the scripts:
 1. **Windmill**: Clone the repository and push the scripts to your windmill instance using windmill cli. The scripts can also be integrated with git (e.g github, gitlab) to automatically sync changes to your windmill instance.
-2. **Independent**: Clone the repository, remove the `wmill` dependency from any individual python script and run them as normal. This requires some additional effort though the windmill libraries do not do any of the heavy lifting and are mostly responsible for environment variable management and resource access. This can be replaced by using a local configuration file or environment variables.
+2. **Independent**: Clone the repository, remove the `import wmill` dependency from any individual python script and run them as normal. This requires some additional effort even though the windmill libraries do not do any of the heavy lifting and are mostly responsible for environment variable management and resource access. This can be replaced by using a local configuration file or environment variables.
 
 ## DICOM Pipeline
 
