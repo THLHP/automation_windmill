@@ -10,10 +10,12 @@ schema:
       type: string
       description: ''
       default: null
+      originalType: string
     endpoint:
       type: string
       description: ''
       default: null
+      originalType: string
   required:
     - name
     - endpoint

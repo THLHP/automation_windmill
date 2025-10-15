@@ -11,7 +11,7 @@ def main(
 ):
 
     kobo_token = json.loads(wmill.get_variable("f/kobo/kobo_token"))
-    settings = json.loads(wmill.get_variable("f/kobo/vultr_db"))
+    settings = json.loads(wmill.get_variable("f/kobo/jetstream_kobo"))
 
     headers = {"Authorization": "Token " + kobo_token['token']}
 

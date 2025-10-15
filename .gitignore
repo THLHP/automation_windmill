@@ -1,6 +1,6 @@
 .DS_Store
 *lock*
 app_*/
-**/*resource*
-**/*variable*
+*resource.yaml
+*variable.yaml
 f/dicoms/sync_chile_asu.script.yaml
