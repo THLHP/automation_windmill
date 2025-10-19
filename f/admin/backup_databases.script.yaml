@@ -1,0 +1,21 @@
+summary: ''
+description: ''
+lock: '!inline f/admin/backup_databases.script.lock'
+kind: script
+schema:
+  $schema: 'https://json-schema.org/draft/2020-12/schema'
+  type: object
+  properties:
+    backup_directory:
+      type: string
+      description: ''
+      default: null
+      originalType: string
+    database_credentials:
+      type: object
+      description: ''
+      default: null
+      format: resource-postgresql
+  required:
+    - database_credentials
+    - backup_directory

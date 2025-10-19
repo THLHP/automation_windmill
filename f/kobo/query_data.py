@@ -11,16 +11,17 @@ def main(
 ):
 
     kobo_token = json.loads(wmill.get_variable("f/kobo/kobo_token"))
-    settings = json.loads(wmill.get_variable("f/kobo/jetstream_kobo"))
+
+    settings = wmill.get_resource("f/kobo/jetstream_kobo")
 
     headers = {"Authorization": "Token " + kobo_token['token']}
 
     conn = psycopg2.connect(
-        host=settings['db_settings']['host'],
-        database=settings['db_settings']['dbname'],
-        user=settings['db_settings']['username'],
-        password=settings['db_settings']['password'],
-        port=settings['db_settings']['port']
+        host=settings['host'],
+        database=settings['dbname'],
+        user=settings['user'],
+        password=settings['password'],
+        port=settings['port']
     )
 
     cursor = conn.cursor()
@@ -36,7 +37,7 @@ def main(
     if results:
         rows = [(row['_uuid'], json.dumps(row), name) for row in results]
         query = """
-            INSERT INTO kobo.submissions (uuid, content, form_name) 
+            INSERT INTO submissions (uuid, content, form_name) 
             VALUES %s 
             ON CONFLICT (uuid) DO NOTHING
         """

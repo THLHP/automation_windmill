@@ -3,7 +3,6 @@ includes:
   - f/**
 excludes:
   - f/dicoms/tagger.app
-excludes: []
 codebases: []
 skipVariables: true
 skipResources: true
