@@ -1,9 +1,7 @@
 summary: ''
 description: ''
 lock: '!inline f/dicoms/upload_file.script.lock'
-has_preprocessor: false
 kind: script
-no_main_func: false
 schema:
   $schema: 'https://json-schema.org/draft/2020-12/schema'
   type: object
@@ -12,7 +10,17 @@ schema:
       type: object
       description: ''
       default: null
-      format: resource-s3_bucket
+      format: resource-s3
+    file_meta:
+      type: object
+      description: ''
+      default: {}
+      properties: {}
+    file_name:
+      type: string
+      description: ''
+      default: placeholder
+      originalType: string
     input_file:
       type: string
       description: ''

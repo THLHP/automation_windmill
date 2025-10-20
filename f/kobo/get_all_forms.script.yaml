@@ -1,18 +1,20 @@
 summary: ''
 description: ''
-lock: '!inline f/dicoms/extract_dicom_metadata.script.lock'
+lock: '!inline f/kobo/get_all_forms.script.lock'
 kind: script
 schema:
   $schema: 'https://json-schema.org/draft/2020-12/schema'
   type: object
   properties:
-    dicoms_dir:
+    append:
       type: string
       description: ''
-      default: /dicoms/download_complete
+      default: ''
       originalType: string
-    limit:
-      type: integer
+    endpoint:
+      type: string
       description: ''
-      default: 1
-  required: []
+      default: null
+      originalType: string
+  required:
+    - endpoint
