@@ -3,10 +3,46 @@ from typing import Dict, List, Any
 import wmill
 import json
 from urllib.parse import urlparse, urlunparse
+import re
+
+
+def _sanitize_name_for_postgres(name: str) -> str:
+    """
+    Sanitize a name string to be safe for PostgreSQL insertion.
+
+    Args:
+        name: The raw name string from the API
+
+    Returns:
+        Sanitized name safe for PostgreSQL text column
+    """
+    if not name or not isinstance(name, str):
+        return ""
+
+    # Remove null bytes (PostgreSQL doesn't allow these)
+    name = name.replace('\x00', '')
+
+    # Remove or replace control characters (except tab and newline which might be OK)
+    # Keep printable characters, spaces, tabs, newlines, and non-ASCII characters
+    name = re.sub(r'[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]', '', name)
+
+    # Normalize whitespace - replace multiple spaces/tabs with single space
+    name = re.sub(r'\s+', ' ', name)
+
+    # Strip leading and trailing whitespace
+    name = name.strip()
+
+    # Limit length to reasonable size (PostgreSQL text can be very long, but let's be reasonable)
+    max_length = 255
+    if len(name) > max_length:
+        name = name[:max_length].strip()
+
+    return name
 
 
 def _format_forms(forms: List[Dict], append: str) -> List[Dict[str, str]]:
-    """Helper function to format forms into the desired output structure."""
+    """Helper function to format forms into the desired output structure.
+    Only includes forms with asset_type 'survey'. Names are sanitized for PostgreSQL."""
     formatted_forms = []
     for form in forms:
         # Get the URL and remove query parameters
@@ -28,25 +64,34 @@ def _format_forms(forms: List[Dict], append: str) -> List[Dict[str, str]]:
         # Append the specified string to the clean URL
         final_url = clean_url + append if clean_url else ""
 
-        formatted_forms.append({
-            "name": form.get("name", ""),
-            "endpoint": final_url
-        })
+        # Only include forms with asset_type 'survey'
+        asset_type = form.get("asset_type", "")
+        if asset_type == "survey":
+            # Sanitize the name for safe PostgreSQL insertion
+            raw_name = form.get("name", "")
+            sanitized_name = _sanitize_name_for_postgres(raw_name)
+
+            formatted_forms.append({
+                "name": sanitized_name,
+                "endpoint": final_url,
+                "asset_type": asset_type
+            })
     return formatted_forms
 
 
 def main(endpoint: str, append: str = "") -> List[Dict[str, str]]:
     """
-    Retrieve all available forms from a KoboToolbox endpoint with pagination support.
+    Retrieve all survey forms from a KoboToolbox endpoint with pagination support.
 
     Args:
         endpoint: The API endpoint URL (e.g., "https://kf.kobotoolbox.org/api/v2/assets/?format=json")
         append: String to append to each form endpoint URL (default: "")
 
     Returns:
-        List of dictionaries, each containing:
-        - name: The form name
+        List of dictionaries for forms with asset_type 'survey', each containing:
+        - name: The form name (sanitized for PostgreSQL insertion)
         - endpoint: The form URL (with query parameters removed and append string added)
+        - asset_type: The asset type (will always be 'survey')
     """
 
     token = json.loads(wmill.get_variable("f/kobo/kobo_token"))

@@ -2,6 +2,18 @@ summary: Uses the kobo forms variable to call python script to populate all form
 description: ''
 value:
   modules:
+    - id: c
+      value:
+        type: script
+        input_transforms:
+          append:
+            type: static
+            value: data.json
+          endpoint:
+            type: static
+            value: 'https://kf.kobotoolbox.org/api/v2/assets/?format=json'
+        is_trigger: false
+        path: f/kobo/get_all_forms
     - id: a
       value:
         type: forloopflow
@@ -12,14 +24,21 @@ value:
               input_transforms:
                 name:
                   type: javascript
+                  value: '${flow_input.iter.value.name}'
                   expr: '`${flow_input.iter.value.name}`'
                 endpoint:
                   type: javascript
+                  value: '${flow_input.iter.value.endpoint}'
                   expr: '`${flow_input.iter.value.endpoint}`'
               path: f/kobo/query_data
         iterator:
           type: javascript
-          expr: 'JSON.parse(variable(''f/kobo/endpoints''))[''endpoints'']'
+          expr: results.c
         parallel: false
         skip_failures: true
-schema: null
+schema:
+  $schema: 'https://json-schema.org/draft/2020-12/schema'
+  type: object
+  order: []
+  properties: {}
+  required: []
