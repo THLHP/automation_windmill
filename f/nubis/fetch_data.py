@@ -25,7 +25,32 @@ def log_with_timestamp(message):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{timestamp}] {message}")
 
-def main(db_creds:postgresql):
+def make_request_with_retry(session, url, max_retries, timeout_tuple, file_name, request_type="GET", data=None):
+    """Helper function to make HTTP requests with retry logic for server timeouts"""
+    for attempt in range(max_retries + 1):  # 0 to max_retries (inclusive)
+        try:
+            if request_type == "POST":
+                response = session.post(url, data=data, timeout=timeout_tuple)
+            else:
+                response = session.get(url, timeout=timeout_tuple)
+            response.raise_for_status()
+            return response
+        except requests.exceptions.HTTPError as e:
+            # Check if it's a 504 Gateway Timeout
+            if e.response.status_code == 504 and attempt < max_retries:
+                wait_time = (2 ** attempt) * 60  # Exponential backoff: 1min, 2min, 4min
+                log_with_timestamp(f"  Server timeout (504) for {file_name}, attempt {attempt + 1}/{max_retries + 1}")
+                log_with_timestamp(f"  Waiting {wait_time // 60} minutes before retry...")
+                time.sleep(wait_time)
+                continue
+            else:
+                # Re-raise for other HTTP errors or if max retries exceeded
+                raise e
+        except Exception as e:
+            # For non-HTTP errors (connection issues, etc.), don't retry
+            raise e
+
+def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minutes: int = 20, max_retries: int = 3):
     # Check if database credentials are provided
     if not db_creds:
         raise Exception("No database credentials provided. Please configure the database credentials parameter.")
@@ -37,6 +62,13 @@ def main(db_creds:postgresql):
         raise Exception(f"Missing required database credential fields: {', '.join(missing_fields)}")
 
     log_with_timestamp("Database credentials validated successfully")
+
+    # Calculate request timeout in seconds and create timeout tuple
+    # (connect_timeout, read_timeout) - use 30s for connection, configurable for read
+    request_timeout_seconds = request_timeout_minutes * 60
+    timeout_tuple = (30, request_timeout_seconds)
+    log_with_timestamp(f"Request timeout set to {request_timeout_minutes} minutes ({request_timeout_seconds} seconds)")
+    log_with_timestamp(f"Max retries for server timeouts: {max_retries}")
 
     # Get credentials from Windmill variable
     creds = json.loads(wmill.get_variable("u/admin/suhail_nubis"))
@@ -99,7 +131,7 @@ def main(db_creds:postgresql):
 
     # Step 1: Get login page and attempt authentication
     log_with_timestamp("Getting login page...")
-    login_page_response = session.get(login_url, timeout=(30, 900))  # 30s connect, 15min read
+    login_page_response = session.get(login_url, timeout=timeout_tuple)
     log_with_timestamp("Login page received")
 
     login_data = {
@@ -108,7 +140,7 @@ def main(db_creds:postgresql):
     }
 
     log_with_timestamp("Submitting login credentials...")
-    login_response = session.post(login_url, data=login_data, timeout=(30, 900))
+    login_response = session.post(login_url, data=login_data, timeout=timeout_tuple)
     log_with_timestamp("Login response received")
 
     # Check if we got a PHPSESSID cookie
@@ -154,8 +186,7 @@ def main(db_creds:postgresql):
 
                 log_with_timestamp(f"  Requesting {file_name} data...")
                 download_start = time.time()
-                response = session.get(url, timeout=(30, 900))
-                response.raise_for_status()
+                response = make_request_with_retry(session, url, max_retries, timeout_tuple, file_name)
                 download_time = time.time() - download_start
                 log_with_timestamp(f"  Received {file_name} response in {download_time:.1f} seconds")
 
@@ -166,16 +197,14 @@ def main(db_creds:postgresql):
                 # Step 1: Set the data filter/period
                 log_with_timestamp(f"  Setting data filter for {file_name}...")
                 download_start = time.time()
-                filter_response = session.get(filter_url, timeout=(30, 900))
-                filter_response.raise_for_status()
+                filter_response = make_request_with_retry(session, filter_url, max_retries, timeout_tuple, file_name + "_filter")
                 filter_time = time.time() - download_start
                 log_with_timestamp(f"  Data filter set in {filter_time:.1f} seconds")
 
                 # Step 2: Download the CSV based on filtered data
                 log_with_timestamp(f"  Downloading CSV data for {file_name}...")
                 csv_start = time.time()
-                response = session.get(download_url, timeout=(30, 900))
-                response.raise_for_status()
+                response = make_request_with_retry(session, download_url, max_retries, timeout_tuple, file_name + "_download")
                 csv_time = time.time() - csv_start
                 download_time = filter_time + csv_time
                 log_with_timestamp(f"  CSV data downloaded in {csv_time:.1f} seconds")
@@ -259,6 +288,16 @@ def main(db_creds:postgresql):
                 if current_field:
                     fields.append(current_field.strip())
 
+                # Clean up quoted fields - remove surrounding quotes
+                cleaned_fields = []
+                for field in fields:
+                    field = field.strip()
+                    # Remove surrounding quotes if present
+                    if len(field) >= 2 and field.startswith('"') and field.endswith('"'):
+                        field = field[1:-1]  # Remove first and last character (quotes)
+                    cleaned_fields.append(field)
+                fields = cleaned_fields
+
                 # Pad or trim fields to match header count
                 while len(fields) < len(headers):
                     fields.append("")
@@ -312,10 +351,61 @@ def main(db_creds:postgresql):
                 conn.autocommit = True
                 log_with_timestamp(f"  Database connection established for {file_name}")
 
+                # Add diagnostic queries to debug table access issue
+                cursor = conn.cursor()
+
+                # Check current database
+                cursor.execute("SELECT current_database();")
+                current_db = cursor.fetchone()[0]
+                log_with_timestamp(f"  DEBUG: Connected to database: {current_db}")
+
+                # Check current search path
+                cursor.execute("SHOW search_path;")
+                search_path = cursor.fetchone()[0]
+                log_with_timestamp(f"  DEBUG: Current search_path: {search_path}")
+
+                # Check if nubis schema exists
+                cursor.execute("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'nubis';")
+                nubis_schema = cursor.fetchone()
+                log_with_timestamp(f"  DEBUG: nubis schema exists: {nubis_schema is not None}")
+
+                # Check if we can access the nubis schema
+                try:
+                    cursor.execute("SELECT 1 FROM information_schema.tables WHERE table_schema = 'nubis' LIMIT 1;")
+                    can_access_nubis = cursor.fetchone() is not None
+                    log_with_timestamp(f"  DEBUG: Can access nubis schema: {can_access_nubis}")
+                except Exception as e:
+                    log_with_timestamp(f"  DEBUG: Cannot access nubis schema: {e}")
+
+                # Check specifically for the crosslink_respondants table
+                if file_name == "crosslink_respondants":
+                    cursor.execute("""
+                        SELECT table_name, table_schema
+                        FROM information_schema.tables
+                        WHERE table_name ILIKE '%crosslink_respondants%'
+                    """)
+                    tables = cursor.fetchall()
+                    log_with_timestamp(f"  DEBUG: Tables matching 'crosslink_respondants': {tables}")
+
+                    # Check exact table with schema
+                    cursor.execute("""
+                        SELECT table_name
+                        FROM information_schema.tables
+                        WHERE table_schema = 'nubis' AND table_name = 'crosslink_respondants'
+                    """)
+                    exact_table = cursor.fetchone()
+                    log_with_timestamp(f"  DEBUG: Exact table nubis.crosslink_respondants exists: {exact_table is not None}")
+
+                    # Try to set search path to include nubis
+                    try:
+                        cursor.execute("SET search_path TO nubis, public;")
+                        log_with_timestamp(f"  DEBUG: Set search_path to include nubis schema")
+                    except Exception as e:
+                        log_with_timestamp(f"  DEBUG: Failed to set search_path: {e}")
+
                 # Insert data into database using bulk operations
                 rows_inserted = 0
                 duplicates_removed = 0
-                cursor = conn.cursor()
 
                 # Handle different table schemas with bulk inserts
                 if file_name == "crosslink_respondants":
@@ -743,8 +833,21 @@ def main(db_creds:postgresql):
                         execute_values(cursor, insert_query, data, template=None, page_size=250)
                         rows_inserted = len(data)
                     except Exception as insert_error:
-                        log_with_timestamp(f"  DEBUG: Insert failed. Full error: {str(insert_error)}")
+                        log_with_timestamp(f"  DEBUG: Insert failed for {file_name}")
+                        log_with_timestamp(f"  DEBUG: Error type: {type(insert_error).__name__}")
+                        log_with_timestamp(f"  DEBUG: Error message: {str(insert_error)}")
+
+                        # Show additional PostgreSQL error details if available
+                        if hasattr(insert_error, 'pgcode'):
+                            log_with_timestamp(f"  DEBUG: PostgreSQL error code: {insert_error.pgcode}")
+                        if hasattr(insert_error, 'pgerror'):
+                            log_with_timestamp(f"  DEBUG: PostgreSQL error details: {insert_error.pgerror}")
+
                         log_with_timestamp(f"  DEBUG: First row full data: {data[0] if data else 'No data'}")
+                        log_with_timestamp(f"  DEBUG: Table name: {table_name}")
+
+                        # Re-raise the error - will be caught by outer exception handler
+                        # which will respect the stop_on_error parameter
                         raise insert_error
 
                 elif file_name == "raw_sst":
@@ -969,8 +1072,21 @@ def main(db_creds:postgresql):
                         execute_values(cursor, insert_query, data, template=None, page_size=250)
                         rows_inserted = len(data)
                     except Exception as insert_error:
-                        log_with_timestamp(f"  DEBUG: Insert failed. Full error: {str(insert_error)}")
+                        log_with_timestamp(f"  DEBUG: Insert failed for {file_name}")
+                        log_with_timestamp(f"  DEBUG: Error type: {type(insert_error).__name__}")
+                        log_with_timestamp(f"  DEBUG: Error message: {str(insert_error)}")
+
+                        # Show additional PostgreSQL error details if available
+                        if hasattr(insert_error, 'pgcode'):
+                            log_with_timestamp(f"  DEBUG: PostgreSQL error code: {insert_error.pgcode}")
+                        if hasattr(insert_error, 'pgerror'):
+                            log_with_timestamp(f"  DEBUG: PostgreSQL error details: {insert_error.pgerror}")
+
                         log_with_timestamp(f"  DEBUG: First row full data: {data[0] if data else 'No data'}")
+                        log_with_timestamp(f"  DEBUG: Table name: {table_name}")
+
+                        # Re-raise the error - will be caught by outer exception handler
+                        # which will respect the stop_on_error parameter
                         raise insert_error
 
                 elif file_name == "raw_picturenaming2":
@@ -1059,7 +1175,34 @@ def main(db_creds:postgresql):
             except Exception as db_error:
                 database_time = time.time() - database_start
                 total_time = time.time() - file_start_time
-                log_with_timestamp(f"  Database error for {file_name}: {str(db_error)}")
+
+                # Enhanced error logging to show full PostgreSQL error details
+                log_with_timestamp(f"  Database error for {file_name}:")
+                log_with_timestamp(f"    Error type: {type(db_error).__name__}")
+                log_with_timestamp(f"    Error message: {str(db_error)}")
+
+                # Show additional PostgreSQL error details if available
+                if hasattr(db_error, 'pgcode'):
+                    log_with_timestamp(f"    PostgreSQL error code: {db_error.pgcode}")
+                if hasattr(db_error, 'pgerror'):
+                    log_with_timestamp(f"    PostgreSQL error details: {db_error.pgerror}")
+                if hasattr(db_error, 'diag'):
+                    log_with_timestamp(f"    Error diagnostics:")
+                    log_with_timestamp(f"      Message primary: {db_error.diag.message_primary}")
+                    if db_error.diag.message_detail:
+                        log_with_timestamp(f"      Message detail: {db_error.diag.message_detail}")
+                    if db_error.diag.message_hint:
+                        log_with_timestamp(f"      Message hint: {db_error.diag.message_hint}")
+                    if db_error.diag.statement_position:
+                        log_with_timestamp(f"      Statement position: {db_error.diag.statement_position}")
+                    if db_error.diag.context:
+                        log_with_timestamp(f"      Context: {db_error.diag.context}")
+
+                # Show the SQL query that failed if we can determine it
+                if file_name == "crosslink_respondants":
+                    log_with_timestamp(f"    Failed query was attempting to INSERT INTO nubis.{file_name}")
+                    log_with_timestamp(f"    Table schema expected: (primkey, bolid, ts)")
+
                 downloaded_files[file_name] = {
                     'url': url,
                     'rows_downloaded': len(df),
@@ -1070,6 +1213,11 @@ def main(db_creds:postgresql):
                     'download_time_seconds': round(download_time, 1),
                     'database_time_seconds': round(database_time, 1)
                 }
+
+                # If stop_on_error is True, re-raise the exception to halt execution
+                if stop_on_error:
+                    log_with_timestamp(f"  Stopping execution due to stop_on_error=True")
+                    raise db_error
             finally:
                 # Always close the database connection for this file
                 if conn:
@@ -1092,6 +1240,11 @@ def main(db_creds:postgresql):
                 'download_time_seconds': round(download_time, 1),
                 'database_time_seconds': round(database_time, 1)
             }
+
+            # If stop_on_error is True, re-raise the exception to halt execution
+            if stop_on_error:
+                log_with_timestamp(f"  Stopping execution due to stop_on_error=True")
+                raise e
 
             # Update progress even for failed downloads
             progress = int(base_progress + (current_url_index * url_progress_increment))
