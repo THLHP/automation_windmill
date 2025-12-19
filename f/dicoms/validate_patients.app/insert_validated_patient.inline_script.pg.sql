@@ -1,3 +1,6 @@
+-- https://www.windmill.dev/docs/getting_started/scripts_quickstart/sql#result-collection
+-- result_collection=legacy
+
 -- to only return the result of the last query use '--return_last_result'
 -- $1 original_patient_id
 -- $2 corrected_patient_id

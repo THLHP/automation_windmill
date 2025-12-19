@@ -1,20 +1,15 @@
 summary: ''
 description: ''
+lock: '!inline f/nubis/fetch_data.script.lock'
 kind: script
 schema:
   $schema: 'https://json-schema.org/draft/2020-12/schema'
   type: object
   properties:
-    append:
-      type: string
-      description: ''
-      default: ''
-      originalType: string
-    endpoint:
-      type: string
+    db_creds:
+      type: object
       description: ''
       default: null
-      originalType: string
+      format: resource-postgresql
   required:
-    - endpoint
-tag: asuvm
+    - db_creds

@@ -7,6 +7,7 @@ import glob
 from typing import TypedDict
 import psycopg2
 from wmill import set_progress
+import requests
 
 class postgresql(TypedDict):
     host: str
@@ -249,6 +250,11 @@ def main(database_credentials: postgresql, backup_directory: str):
             ├── database2_20250519_143025.sql
             └── database3_20250519_143025.sql
     """
+    try:
+        requests.get("https://hc-ping.com/e7abce64-d85e-4ead-b31a-a9528dd2c87c/start", timeout=10)
+    except requests.RequestException as e:
+        # Log ping failure here...
+        print("Ping failed: %s" % e)
 
     # Check and install pg_dump if needed
     try:
@@ -409,6 +415,11 @@ def main(database_credentials: postgresql, backup_directory: str):
 
         # Final progress update - all backups completed
         set_progress(100)
+        try:
+            requests.get("https://hc-ping.com/e7abce64-d85e-4ead-b31a-a9528dd2c87c", timeout=10)
+        except requests.RequestException as e:
+        # Log ping failure here...
+            print("Ping failed: %s" % e)
 
         return backup_results
 

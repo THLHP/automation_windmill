@@ -24,13 +24,12 @@ value:
               input_transforms:
                 name:
                   type: javascript
-                  value: '${flow_input.iter.value.name}'
                   expr: '`${flow_input.iter.value.name}`'
                 endpoint:
                   type: javascript
-                  value: '${flow_input.iter.value.endpoint}'
                   expr: '`${flow_input.iter.value.endpoint}`'
               path: f/kobo/query_data
+              tag_override: asuvm
         iterator:
           type: javascript
           expr: results.c

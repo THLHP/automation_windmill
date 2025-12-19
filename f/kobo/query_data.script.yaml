@@ -1,6 +1,5 @@
 summary: Pulls data in from kobo endpoints and uploads them to our postgres instance
 description: ''
-lock: '!inline f/kobo/query_data.script.lock'
 kind: script
 schema:
   $schema: 'https://json-schema.org/draft/2020-12/schema'
@@ -19,3 +18,4 @@ schema:
   required:
     - name
     - endpoint
+tag: asuvm

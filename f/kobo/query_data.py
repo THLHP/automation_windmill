@@ -37,7 +37,7 @@ def main(
     if results:
         rows = [(row['_uuid'], json.dumps(row), name) for row in results]
         query = """
-            INSERT INTO submissions (uuid, content, form_name) 
+            INSERT INTO kobo.submissions (uuid, content, form_name) 
             VALUES %s 
             ON CONFLICT (uuid) DO NOTHING
         """

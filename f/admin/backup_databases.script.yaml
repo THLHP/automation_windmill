@@ -3,7 +3,6 @@ description: >-
   Automatically backs up all databases from a PostgreSQL server using PostgreSQL
   17 client tools. Installs dependencies if needed and provides progress
   tracking.
-lock: '!inline f/admin/backup_databases.script.lock'
 kind: script
 schema:
   $schema: 'https://json-schema.org/draft/2020-12/schema'
