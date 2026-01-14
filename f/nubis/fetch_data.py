@@ -88,34 +88,34 @@ def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minut
 
     two_step_urls = [
         ("raw_sst_practice",
-         filter_url_base + "sst_practice&period=-1",
+         filter_url_base + "sst_practice&period=45",
          download_url_base + "sst_practice"),
         ("raw_picturenaming",
-          filter_url_base + "picturenaming&period=-1",
+          filter_url_base + "picturenaming&period=45",
           download_url_base + "picturenaming"),
         ("raw_reaction_practice",
-          filter_url_base + "reaction_practice&period=-1",
+          filter_url_base + "reaction_practice&period=45",
           download_url_base + "reaction_practice"),
         ("raw_reaction",
-          filter_url_base + "reaction&period=-1",
+          filter_url_base + "reaction&period=45",
           download_url_base + "reaction"),
         ("raw_vicky",
-          filter_url_base + "vicky&period=-1",
+          filter_url_base + "vicky&period=45",
           download_url_base + "vicky"),
         ("raw_flanker_practice",
-          filter_url_base + "flanker_practice&period=-1",
+          filter_url_base + "flanker_practice&period=45",
           download_url_base + "flanker_practice"),
         ("raw_sst",
-          filter_url_base + "sst&period=-1",
+          filter_url_base + "sst&period=45",
           download_url_base + "sst"),
         ("raw_consent",
-          filter_url_base + "consent&period=-1",
+          filter_url_base + "consent&period=45",
           download_url_base + "consent"),
         ("raw_flanker",
-          filter_url_base + "flanker&period=-1",
+          filter_url_base + "flanker&period=45",
           download_url_base + "flanker"),
         ("raw_picturenaming2",
-          filter_url_base + "picturenaming2&period=-1",
+          filter_url_base + "picturenaming2&period=45",
           download_url_base + "picturenaming2"),
     ]
 
@@ -247,6 +247,12 @@ def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minut
             # Get header - clean trailing commas
             header_line = lines[0].rstrip(',').rstrip()
             headers = [h.strip() for h in header_line.split(',')]
+            if file_name == "raw_picturenaming":
+                index_positions = [i for i, h in enumerate(headers) if h == "index"]
+                if index_positions:
+                    headers[index_positions[0]] = "test_index"
+                if len(index_positions) > 1:
+                    headers[index_positions[1]] = "item_index"
             log_with_timestamp(f"  CSV headers ({len(headers)}): {headers[:5]}...")
 
             # Parse data rows with smart comma splitting that handles JSON arrays
@@ -541,8 +547,8 @@ def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minut
                     data = []
                     for _, row in df_dedupe.iterrows():
                         row_data = (
-                            row['test'], row['index'], row['suid'], row['ts'], row['name'],
-                            row['index.1'], row['state'], row['stateDescription'],
+                            row['test'], row['test_index'], row['suid'], row['ts'], row['name'],
+                            row['item_index'], row['state'], row['stateDescription'],
                             row['tstampOnset'], row['tstampFinish'], row['durationTotal'],
                             row['variableName'], row['accuracy'], row['accuracyDescription'], row['primkey']
                         )
