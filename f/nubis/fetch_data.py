@@ -11,6 +11,8 @@ from datetime import datetime
 import time
 import csv
 
+DEBUG_ENABLED = False
+
 class postgresql(TypedDict):
     host: str
     port: int
@@ -22,8 +24,9 @@ class postgresql(TypedDict):
 
 def log_with_timestamp(message):
     """Helper function to print messages with timestamps"""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] {message}")
+    if DEBUG_ENABLED:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{timestamp}] {message}")
 
 def make_request_with_retry(session, url, max_retries, timeout_tuple, file_name, request_type="GET", data=None):
     """Helper function to make HTTP requests with retry logic for server timeouts"""
@@ -50,7 +53,9 @@ def make_request_with_retry(session, url, max_retries, timeout_tuple, file_name,
             # For non-HTTP errors (connection issues, etc.), don't retry
             raise e
 
-def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minutes: int = 20, max_retries: int = 3):
+def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minutes: int = 20, max_retries: int = 3, debug: bool = False):
+    global DEBUG_ENABLED
+    DEBUG_ENABLED = bool(debug)
     # Check if database credentials are provided
     if not db_creds:
         raise Exception("No database credentials provided. Please configure the database credentials parameter.")
@@ -419,7 +424,7 @@ def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minut
                     df_dedupe = df.drop_duplicates(subset=['primkey'], keep='last')
                     duplicates_removed = len(df) - len(df_dedupe)
                     if duplicates_removed > 0:
-                        print(f"  Removed {duplicates_removed} duplicate rows")
+                        log_with_timestamp(f"  Removed {duplicates_removed} duplicate rows")
 
                     # Prepare data for bulk insert
                     data = [(row['primkey'], row['bolid'], row['ts']) for _, row in df_dedupe.iterrows()]
