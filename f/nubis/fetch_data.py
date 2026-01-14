@@ -12,6 +12,8 @@ import time
 import csv
 
 DEBUG_ENABLED = False
+HEALTHCHECK_START_URL = "https://hc-ping.com/hLLDZXOBn0N0ABea5bVJKQ/nubis-sync/start"
+HEALTHCHECK_END_URL_TEMPLATE = "https://hc-ping.com/hLLDZXOBn0N0ABea5bVJKQ/nubis-sync/{}"
 
 class postgresql(TypedDict):
     host: str
@@ -27,6 +29,12 @@ def log_with_timestamp(message):
     if DEBUG_ENABLED:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{timestamp}] {message}")
+
+def ping_healthcheck(url):
+    try:
+        requests.get(url, timeout=10)
+    except Exception as e:
+        log_with_timestamp(f"  Healthcheck ping failed: {e}")
 
 def make_request_with_retry(session, url, max_retries, timeout_tuple, file_name, request_type="GET", data=None):
     """Helper function to make HTTP requests with retry logic for server timeouts"""
@@ -53,7 +61,7 @@ def make_request_with_retry(session, url, max_retries, timeout_tuple, file_name,
             # For non-HTTP errors (connection issues, etc.), don't retry
             raise e
 
-def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minutes: int = 20, max_retries: int = 3, debug: bool = False):
+def _run_sync(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minutes: int = 20, max_retries: int = 3, debug: bool = False):
     global DEBUG_ENABLED
     DEBUG_ENABLED = bool(debug)
     # Check if database credentials are provided
@@ -1294,3 +1302,25 @@ def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minut
         'total_database_time_seconds': round(total_database_time, 1),
         'details': downloaded_files
     }
+
+def main(db_creds:postgresql, stop_on_error: bool = False, request_timeout_minutes: int = 20, max_retries: int = 3, debug: bool = False):
+    global DEBUG_ENABLED
+    DEBUG_ENABLED = bool(debug)
+    error_code = 0
+    ping_healthcheck(HEALTHCHECK_START_URL)
+    try:
+        result = _run_sync(
+            db_creds=db_creds,
+            stop_on_error=stop_on_error,
+            request_timeout_minutes=request_timeout_minutes,
+            max_retries=max_retries,
+            debug=debug
+        )
+        if isinstance(result, dict) and result.get('files_failed', 0) > 0:
+            error_code = 1
+        return result
+    except Exception:
+        error_code = 1
+        raise
+    finally:
+        ping_healthcheck(HEALTHCHECK_END_URL_TEMPLATE.format(error_code))
